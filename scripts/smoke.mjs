@@ -1,63 +1,73 @@
-// Smoke test: does the SHIPPED (obfuscated) bundle still parse and boot?
-// usage: npm run build && node scripts/smoke.mjs
+// Smoke test for the SHIPPED build: does the protected output still work?
+// usage: npm run build && npm run smoke
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-const dir = 'dist/assets';
-const file = path.join(dir, fs.readdirSync(dir).find((f) => f.endsWith('.js')));
-const code = fs.readFileSync(file, 'utf8');
+const dir = 'dist/a';
+const files = fs.readdirSync(dir);
+const jsFiles = files.filter((f) => f.endsWith('.js'));
+const cssFile = files.find((f) => f.endsWith('.css'));
+const allJs = jsFiles.map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+const css = fs.readFileSync(path.join(dir, cssFile), 'utf8');
+const html = fs.readFileSync('dist/index.html', 'utf8');
 
-// 1. parses at all
-try { new vm.Script(code, { filename: file }); }
-catch (e) { console.error('PARSE FAIL', e.message); process.exit(1); }
-console.log('parse: ok');
+let fail = 0;
+const check = (ok, label, extra = '') => { console.log(`${label}: ${ok ? 'ok' : 'FAIL'}${extra ? ' ' + extra : ''}`); if (!ok) fail++; };
 
-// 2. the integrity guard boots and stamps the document
+/* 1. every chunk is valid JS; no sourcemaps */
+let parseErr = null;
+for (const f of jsFiles) {
+  const src = fs.readFileSync(path.join(dir, f), 'utf8');
+  // ES module: strip import/export statements, then parse the rest
+  const probe = src
+    .replace(/\bimport\s*(\{[^}]*\}|[\w$]+|\*\s*as\s*[\w$]+)?\s*from\s*['"][^'"]+['"]\s*;?/g, '')
+    .replace(/\bimport\s*['"][^'"]+['"]\s*;?/g, '')
+    .replace(/\bexport\s*\{[^}]*\}\s*(from\s*['"][^'"]+['"])?\s*;?/g, '')
+    .replace(/\bexport\s+(default\s+)?(const|let|var|function|class)\b/g, '$2');
+  try { new vm.Script(probe, { filename: f }); } catch (e) { parseErr = `${f}: ${e.message}`; }
+}
+check(!parseErr, 'parse', parseErr || `(${jsFiles.length} chunks)`);
+check(!files.some((f) => f.endsWith('.map')), 'no sourcemaps');
+
+/* 2. index.html gives away almost nothing: no chunk list, no chunk name literals */
+const scriptSrc = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
+check(scriptSrc.length === 1, 'index.html loads one entry', scriptSrc.join(' '));
+const listed = jsFiles.filter((f) => html.includes(f));
+check(listed.length === 1, 'no chunk list leaked in html', listed.length > 1 ? `leaked ${listed.length}` : '');
+check(!/<link[^>]*rel="stylesheet"[^>]*href="\/a\//.test(html), 'css not listed in html');
+
+/* 3. obfuscation actually applied: known source identifiers are gone */
+const leaks = ['HallOfFame', 'Members', 'gm-card', 'hof-modal', 'fame-card', 'lanyard', 'presence', 'logoPaths'];
+const found = leaks.filter((w) => allJs.includes(w) || css.includes(w));
+check(found.length === 0, 'source names hidden', found.length ? 'leaked: ' + found.join(', ') : '');
+
+/* 4. class tokens used by the runtime exist in the CSS (rename stayed in sync) */
+const tokens = new Set([...css.matchAll(/(?:^|[{};,\s>+~(])\.?\s?\.([a-zA-Z_][\w-]{4})/g)].map((m) => m[1]));
+check(tokens.size > 50, 'css class tokens renamed', `(${tokens.size} tokens)`);
+// only the selector half of a rule can hold a class as far as this matters
+const selectors = [...css.matchAll(/(?:^|})([^{}@]+)\{/g)].map((m) => m[1]);
+const digits = selectors.flatMap((s) => [...s.matchAll(/\.([0-9][\w-]*)/g)].map((m) => m[1]));
+check(digits.length === 0, 'no invalid class tokens', digits.slice(0, 5).join(' '));
+
+/* 5. the boot loader runs: stamps the document and injects the stylesheet */
 const el = {
   attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; },
-  classList: { add() { }, remove() { }, toggle() { }, contains: () => false }, style: {}
+  appendChild() { el._appended = (el._appended || 0) + 1; },
+  classList: { add() { }, remove() { }, toggle() { }, contains: () => false }, style: {},
 };
-const noop = () => { };
-const sandbox = {
-  window: {}, console: { log: noop, warn: noop, error: noop, info: noop },
-  document: {
-    documentElement: el, body: { classList: el.classList, appendChild: noop, style: {} },
-    createElement: () => ({ classList: el.classList, style: {}, setAttribute: noop, appendChild: noop, getContext: () => null }),
-    querySelector: () => null, querySelectorAll: () => [], addEventListener: noop, removeEventListener: noop,
-    // React's createRoot needs a real-looking container
-    getElementById: () => ({ nodeType: 1, tagName: 'DIV', namespaceURI: 'http://www.w3.org/1999/xhtml',
-      firstChild: null, appendChild: noop, insertBefore: noop, removeChild: noop, addEventListener: noop, removeEventListener: noop,
-      setAttribute: noop, getAttribute: () => null, style: {}, classList: el.classList })
-  },
-  localStorage: { getItem: () => null, setItem: noop },
-  location: { hash: '', hostname: 'localhost', href: 'http://localhost/' },
-  navigator: { userAgent: 'node' }, performance,
-  requestAnimationFrame: () => 0, cancelAnimationFrame: noop, setInterval: () => 0, clearInterval: noop,
-  setTimeout: () => 0, clearTimeout: noop, addEventListener: noop, removeEventListener: noop,
-  matchMedia: () => ({ matches: false, addEventListener() { } }),
-  WebSocket: function () { throw new Error('no ws'); }, fetch: () => Promise.reject(new Error('offline')),
-  MutationObserver: function () { return { observe: noop, disconnect: noop, takeRecords: () => [] }; },
-  Node: function () {}, Element: function () {}, HTMLElement: function () {},
-  Image: function () { }, URL, URLSearchParams, BigInt, Intl, Math, JSON, Date, Error, Promise,
-};
-// the guard only needs document + window; run just that tail so a stub DOM
-// can't mask the result (React mounting needs a real browser, not this test)
-const tail = code.slice(code.lastIndexOf(';(function(){'));
-let guardErr = null;
-try { vm.runInNewContext(tail, { document: sandbox.document, window: {} }, { timeout: 5000 }); }
-catch (e) { guardErr = e; }
-const stamp = sandbox.document.documentElement.attrs['data-lb'];
-console.log('integrity stamp:', stamp ?? '(guard did not run)', guardErr ? '-> ' + guardErr.message : '');
-if (stamp !== '1') process.exit(1);
+const bootName = scriptSrc[0].split('/').pop();
+const boot = fs.readFileSync(path.join(dir, bootName), 'utf8');
+const imports = [...boot.matchAll(/import"([^"]+)"/g)].map((m) => m[1]);
+check(imports.length === 1 && fs.existsSync('dist' + imports[0]), 'boot imports entry chunk', imports.join(' '));
+try {
+  vm.runInNewContext(boot.replace(/^\s*import"[^"]+";?/, ''), {
+    document: { documentElement: el, head: el, createElement: () => ({ setAttribute() { }, style: {} }) },
+    window: {},
+  }, { timeout: 5000 });
+} catch { /* the stub is not a DOM; the stamp below is what matters */ }
+check(el.attrs['data-lb'] === '1', 'ownership stamp', '');
+check(el._appended === 1, 'stylesheet injected at runtime');
 
-// and the whole bundle parses + is a single self-contained module
-console.log('single file:', fs.readdirSync(dir).filter((f) => f.endsWith('.js')).length === 1);
-
-// 3. the fingerprint that catches a re-uploaded "fixed" copy (JS flipped back to 2 lanes)
-let h = 0;
-for (let i = 0; i < code.length; i += 97) h = (h * 31 + code.charCodeAt(i)) >>> 0;
-const flipped = code.replace('!', '!0');   // any edit at all re-rolls the fingerprint
-let h2 = 0;
-for (let i = 0; i < flipped.length; i += 97) h2 = (h2 * 31 + flipped.charCodeAt(i)) >>> 0;
-console.log('edit detection:', h === h2 ? 'FAILED (same fingerprint)' : `ok (${h.toString(36)} -> ${h2.toString(36)})`);
+if (fail) { console.error(`\n${fail} check(s) failed`); process.exit(1); }
+console.log('\nall checks passed');

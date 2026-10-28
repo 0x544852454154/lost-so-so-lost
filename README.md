@@ -13,11 +13,19 @@ Everything here is © lostboys, all rights reserved — see `LICENSE`.
 
 `npm run build` runs `scripts/protect.js`, which:
 
-- folds every lazy chunk into **one** bundle (no readable module structure)
-- obfuscates it (`javascript-obfuscator`): no readable names or strings, base64
-  string array, control-flow flattening, object keys transformed
+- **renames every class / id** to an opaque 5-letter token (`.gm-card`,
+  `.hof-modal`, `.fame-card` are gone), touching only selector positions so
+  values like `var(--fg)` stay intact. State classes the JS toggles
+  (`light`, `open`, `is-on`, …) are kept readable — see `KEEP` in the plugin.
+- splits the app into **3 chunk files** (vendor / app / loader) and obfuscates
+  every one: base64 string array, control-flow flattening, object keys
+  transformed (no readable names or strings anywhere)
+- writes **no chunk list into `index.html`**: a small random-named loader
+  imports the app and injects the stylesheet at runtime, so View Source shows
+  almost nothing (no CSS link, no module names)
 - ships **no sourcemaps**, minified with terser
-- appends an ownership stamp (`window.__LB_OWNER__`, `data-lb` on `<html>`)
+- stamps every chunk with an ownership fingerprint (`window.__LB_*__`,
+  `window.__LB_OWNER__`, `data-lb` on `<html>`)
 
 Runtime side (`src/guard.js`, `src/Watermark.jsx`):
 
@@ -27,8 +35,11 @@ Runtime side (`src/guard.js`, `src/Watermark.jsx`):
 - `data-lb-copy="<host>"` on `<html>` when served from a domain not in
   `OWNER_HOSTS` (add your real domain there)
 
-`npm run smoke` (after a build) checks the shipped bundle parses, is a single
-file, boots its stamp, and that any edit changes its fingerprint.
+`npm run smoke` (after a build) asserts all of the above on the real output:
+chunks parse, no sourcemaps, no chunk list or CSS link in the HTML, source names
+and class tokens gone, the loader injects the stylesheet and stamps the page.
+`node scripts/crosscheck.mjs` compares the built CSS against `src/styles.css`
+to prove no selector was lost in the rename.
 
 **Honest limit:** HTML/CSS/JS served to a browser can always be viewed. This
 makes copying slow, obvious and legally traceable — it does not make it
