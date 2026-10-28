@@ -27,7 +27,7 @@ function sampleHash(s, step = 97) {
 
 /* stable rename used for both CSS selectors and the JSX strings that reference
    them. State classes the JS itself toggles (light/dark) stay readable. */
-const KEEP = new Set(['light', 'dark', 'on', 'open', 'active', 'is-bg', 'is-leaving', 'hof-src', 'hof-lock', 'site-reveal', 'has-ambient', 'banner-bg', 'intro-active']);
+const KEEP = new Set(['light', 'dark', 'on', 'open', 'active', 'is-bg', 'is-leaving', 'hof-src', 'hof-lock', 'site-reveal', 'has-ambient', 'banner-bg', 'intro-active', 'wmark', 'wmark-tag', 'wmark-info', 'wmark-modal', 'wmark-card', 'wmark-legal', 'wmark-close']);
 function mapName(n, map) {
   if (!n || KEEP.has(n)) return n;
   if (!map.has(n)) map.set(n, newToken());
