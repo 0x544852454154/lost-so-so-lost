@@ -3,6 +3,7 @@ import Intro from './Intro.jsx';
 import Nav from './Nav.jsx';
 import HallOfFame from './HallOfFame.jsx';
 import Members from './Members.jsx';
+import Watermark from './Watermark.jsx';
 import { PresenceProvider } from './presence.jsx';
 import { useRoute, useTheme, useMusic, useCardGlow, useBannerBackground } from './hooks.js';
 import { SONG_URL } from './data.js';
@@ -76,6 +77,7 @@ export default function App() {
           {view.route === '/members' && <Members />}
         </section>
       </main>
+      <Watermark phase={phase} />
       <audio ref={music.audio} src={SONG_URL} loop preload="metadata" />
     </PresenceProvider>
   );

@@ -1,3 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-export default defineConfig({ plugins: [react()] });
+import protect from './scripts/protect.js';
+
+export default defineConfig({
+  plugins: [react(), protect()],
+  build: {
+    modulePreload: false,
+    cssCodeSplit: false,
+  },
+});

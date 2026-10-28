@@ -7,8 +7,17 @@
     "extract": "node scripts/extract.mjs",
     "dev": "vite",
     "build": "vite build",
+    "smoke": "node scripts/smoke.mjs",
     "preview": "vite preview"
   },
-  "dependencies": { "react": "^18.3.1", "react-dom": "^18.3.1" },
-  "devDependencies": { "@vitejs/plugin-react": "^4.3.1", "vite": "^5.4.0" }
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "javascript-obfuscator": "^5.9.0",
+    "terser": "^5.51.2",
+    "vite": "^5.4.0"
+  }
 }
