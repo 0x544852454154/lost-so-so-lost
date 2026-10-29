@@ -42,6 +42,11 @@ const leaks = ['HallOfFame', 'Members', 'gm-card', 'hof-modal', 'fame-card', 'la
 const found = leaks.filter((w) => allJs.includes(w) || css.includes(w));
 check(found.length === 0, 'source names hidden', found.length ? 'leaked: ' + found.join(', ') : '');
 
+/* 3b. the selector rename must never touch declaration values */
+check(css.includes('#fff') && css.includes('#000'), 'colour values intact');
+const badValueToken = /(?:linear-gradient|radial-gradient)\([^)]*#[a-z0-9]{5}\b/i.test(css);
+check(!badValueToken, 'no class tokens inside colour values');
+
 /* 4. class tokens used by the runtime exist in the CSS (rename stayed in sync) */
 const tokens = new Set([...css.matchAll(/(?:^|[{};,\s>+~(])\.?\s?\.([a-zA-Z_][\w-]{4})/g)].map((m) => m[1]));
 check(tokens.size > 50, 'css class tokens renamed', `(${tokens.size} tokens)`);

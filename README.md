@@ -13,10 +13,13 @@ Everything here is © lostboys, all rights reserved — see `LICENSE`.
 
 `npm run build` runs `scripts/protect.js`, which:
 
-- **renames every class / id** to an opaque 5-letter token (`.gm-card`,
-  `.hof-modal`, `.fame-card` are gone), touching only selector positions so
-  values like `var(--fg)` stay intact. State classes the JS toggles
-  (`light`, `open`, `is-on`, …) are kept readable — see `KEEP` in the plugin.
+- **renames structural class / id names** to opaque 5-letter tokens
+  (`.gm-card`, `.hof-modal`, `.fame-card` are gone). CSS selectors and the JSX /
+  JS references are renamed together, so the page cannot end up with a token in
+  the stylesheet and the old name in the DOM. Only selector positions are
+  touched, so values like `var(--fg)`, `#fff` and `url(#lbShape)` stay intact.
+  State classes the JS toggles (`light`, `open`, `is-on`, …) are kept readable
+  — see `KEEP` in the plugin.
 - splits the app into **3 chunk files** (vendor / app / loader) and obfuscates
   every one: base64 string array, control-flow flattening, object keys
   transformed (no readable names or strings anywhere)
@@ -45,3 +48,11 @@ to prove no selector was lost in the rename.
 makes copying slow, obvious and legally traceable — it does not make it
 impossible. For real deterrence keep assets (fonts, logo SVG, song) on your own
 origin with hotlink protection, and keep the visible credit on.
+
+## Deploy
+
+`dist/` is intentionally git-ignored. Vercel builds the site from source
+(`npm run build`) on every push to `main`; do not commit the generated bundle.
+If a deploy ever looks unstyled, run `npm run build && npm run smoke &&
+node scripts/crosscheck.mjs` locally — those checks catch a CSS/JS class-name
+mismatch before it ships.
