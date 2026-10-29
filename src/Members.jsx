@@ -3,7 +3,7 @@ import { MEMBERS } from './data.js';
 import { usePresence } from './presence.jsx';
 import {
   pad, displayName, handleText, roleText, bioText, decoUrl, activityLabel, statusLabel, defaultAvatar,
-  getAvatarUrl, getBannerUrl, safeUrl, handleFromUrl, reducedMotion,
+  getAvatarUrl, getBannerUrl, safeUrl, handleFromUrl, calmMotion,
 } from './util.js';
 
 const ICONS = {
@@ -109,7 +109,7 @@ export default function Members() {
   useEffect(() => {
     if (!modal) return;
     const st = stage.current; st.style.setProperty('--rot', '0deg');
-    if (matchMedia('(max-width:800px)').matches || reducedMotion()) return;
+    if (matchMedia('(max-width:800px)').matches || calmMotion()) return;
     let raf = 0, rot = 0, t0 = 0;
     const tick = (t) => { rot = (rot - Math.min(t - t0, 250) * 0.012) % 360; t0 = t; st.style.setProperty('--rot', rot + 'deg'); raf = requestAnimationFrame(tick); };
     const timer = setTimeout(() => { setSpin(true); t0 = performance.now(); raf = requestAnimationFrame(tick); }, 950);
@@ -182,7 +182,7 @@ export default function Members() {
       const j = (((index + k) % total) + total) % total;
       ghosts.push(
         <div key={k} className="gm-card ghost" aria-hidden="true" style={{ '--m': k }}>
-          <img src={cardSrc(MEMBERS[j])} alt="" draggable="false" /><span className="gm-tag">MEMBER / {pad(j + 1)}</span>
+          <img src={cardSrc(MEMBERS[j])} alt="" draggable="false" loading="lazy" decoding="async" /><span className="gm-tag">MEMBER / {pad(j + 1)}</span>
         </div>);
     }
   }
@@ -195,7 +195,7 @@ export default function Members() {
       <div className="gm-main">
         <div className="gm-me fx" style={{ '--i': 0 }}>
           <button className="gm-pfp" ref={pfp} type="button" aria-label="Open member profile" aria-haspopup="dialog" onClick={() => setModal(true)}>
-            <img className="gm-av" alt="Profile picture" src={avatar} /><span className="gm-dot" data-s={status} title={statusLabel(status)} />
+            <img className="gm-av" alt="Profile picture" src={avatar} loading="eager" decoding="async" /><span className="gm-dot" data-s={status} title={statusLabel(status)} />
           </button>
           <div><h1>{name}</h1><small className="gm-hd">{handle}</small></div>
         </div>
@@ -208,7 +208,7 @@ export default function Members() {
                 role="option" aria-label={'Member ' + (i + 1)} aria-selected={a === 0}
                 style={{ '--d': d, '--a': a, '--m': w, opacity: a > 1 ? 0 : a ? 0.4 : 1, filter: a ? 'brightness(.55) saturate(.8)' : 'none', pointerEvents: a > 1 ? 'none' : 'auto' }}
                 onClick={() => go(i)}>
-                <img src={cardSrc(mm)} alt="" draggable="false" /><span className="gm-tag">MEMBER / {pad(i + 1)}</span>
+                <img src={cardSrc(mm)} alt="" draggable="false" loading={a <= 1 ? 'eager' : 'lazy'} decoding="async" /><span className="gm-tag">MEMBER / {pad(i + 1)}</span>
               </div>
             );
           })}
@@ -226,8 +226,8 @@ export default function Members() {
           <button className="gm-x" ref={closeBtn} type="button" aria-label="Close" onClick={() => setModal(false)}>&times;</button>
           <div className="gm-who">
             <div className="gm-pic">
-              <img className="gm-av" alt="Profile picture" src={avatar} />
-              <img className={'gm-deco' + (deco ? ' is-on' : '')} src={deco || undefined} alt="" aria-hidden="true" />
+              <img className="gm-av" alt="Profile picture" src={avatar} loading="eager" decoding="async" />
+              <img className={'gm-deco' + (deco ? ' is-on' : '')} src={deco || undefined} alt="" aria-hidden="true" decoding="async" />
               <span className="gm-dot" data-s={status} />
             </div>
             <h2>{name}</h2>

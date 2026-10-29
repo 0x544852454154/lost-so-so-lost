@@ -3,11 +3,10 @@ import Intro from './Intro.jsx';
 import Nav from './Nav.jsx';
 import HallOfFame from './HallOfFame.jsx';
 import Members from './Members.jsx';
-import Watermark from './Watermark.jsx';
 import { PresenceProvider } from './presence.jsx';
 import { useRoute, useTheme, useMusic, useCardGlow, useBannerBackground } from './hooks.js';
 import { SONG_URL } from './data.js';
-import { reducedMotion } from './util.js';
+import { calmMotion } from './util.js';
 
 const TITLES = { '/': 'lostboys', '/hall-of-fame': 'lostboys — Hall of Fame', '/members': 'lostboys — Members' };
 const LABELS = { '/': 'Home', '/hall-of-fame': 'Hall of Fame', '/members': 'Members' };
@@ -57,7 +56,7 @@ export default function App() {
       setView({ route, mode: siteIn.current ? 'in' : '', base: 0 });
       window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     };
-    if (siteIn.current && !reducedMotion()) {
+    if (siteIn.current && !calmMotion()) {
       setView((v) => ({ ...v, mode: 'out' }));
       swapT.current = setTimeout(show, 480);
       const n = navRef.current;
@@ -77,7 +76,6 @@ export default function App() {
           {view.route === '/members' && <Members />}
         </section>
       </main>
-      <Watermark phase={phase} />
       <audio ref={music.audio} src={SONG_URL} loop preload="metadata" />
     </PresenceProvider>
   );

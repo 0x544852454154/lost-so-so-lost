@@ -1271,51 +1271,125 @@ body.hof-lock{overflow:hidden}
 html.banner-bg .intro-overlay.is-bg canvas{opacity:.1!important}
 @media (prefers-reduced-motion:reduce){.bgban{transition:opacity .2s;transform:none}}
 
-/* ═══ ownership watermark (visible credit — do not remove) ═══ */
-.wmark{
-  position:fixed;right:14px;bottom:14px;z-index:60;display:flex;align-items:flex-end;gap:1px;
-  font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.14em;
-  color:var(--fg);opacity:.32;pointer-events:none;user-select:none;-webkit-user-select:none;
-  transition:opacity .5s ease,transform .5s ease;mix-blend-mode:difference;
-}
-.wmark span{display:inline-block;transform:translateY(calc((var(--i) * 7px) % 5px))}
-.wmark:hover{opacity:.75}
-.wmark.hide{opacity:0;transform:translateY(6px)}
-.wmark-tag{
-  margin-left:6px;padding:2px 4px;border:1px solid currentColor;border-radius:3px;
-  font-style:normal;font-size:7px;letter-spacing:.2em;opacity:.7;
-}
-@media (max-width:600px){.wmark{right:10px;bottom:10px;font-size:8px}}
+/* ═══ low-power / touch mode ═══
+   Touch, low-memory, reduced-motion and save-data devices skip the GPU-heavy
+   glass, filters and decorative loops. Layout and content stay identical. */
+html[data-perf="low"] body{background-attachment:scroll}
 
-.wmark-info{
-  position:fixed;left:14px;bottom:14px;z-index:60;width:20px;height:20px;border-radius:999px;
-  border:1px solid var(--card-border);background:var(--card-bg);color:var(--fg);
-  font:700 11px/1 ui-monospace,monospace;cursor:pointer;opacity:.45;backdrop-filter:blur(8px);
-  transition:opacity .25s ease,transform .25s var(--spring);-webkit-tap-highlight-color:transparent;
+html[data-perf="low"] .nav-inner,
+html[data-perf="low"] .mobile-menu,
+html[data-perf="low"] .island-live,
+html[data-perf="low"] .hero-copy,
+html[data-perf="low"] .activity-chip,
+html[data-perf="low"] .aff-card,
+html[data-perf="low"] .grid-card,
+html[data-perf="low"] .fame-card,
+html[data-perf="low"] .carousel-card,
+html[data-perf="low"] .view-toggle,
+html[data-perf="low"] .hof-scrim,
+html[data-perf="low"] .hof-nav,
+html[data-perf="low"] .hof-x,
+html[data-perf="low"] .gm-scrim{
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
 }
-.wmark-info:hover,.wmark-info:focus-visible{opacity:1;transform:scale(1.1);outline:none}
+html[data-perf="low"] .nav-inner,
+html[data-perf="low"] .mobile-menu,
+html[data-perf="low"] .island-live{
+  background:rgba(10,10,14,.94);
+  box-shadow:0 8px 24px -12px rgba(0,0,0,.7);
+}
+html.light[data-perf="low"] .nav-inner,
+html.light[data-perf="low"] .mobile-menu,
+html.light[data-perf="low"] .island-live{
+  background:rgba(255,255,255,.94);
+  box-shadow:0 8px 24px -14px rgba(0,0,0,.25);
+}
+html[data-perf="low"] .hero-copy,
+html[data-perf="low"] .activity-chip,
+html[data-perf="low"] .aff-card,
+html[data-perf="low"] .grid-card,
+html[data-perf="low"] .fame-card,
+html[data-perf="low"] .carousel-card{
+  background:#12101a;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 18px 40px -28px rgba(0,0,0,.8);
+}
+html.light[data-perf="low"] .hero-copy,
+html.light[data-perf="low"] .activity-chip,
+html.light[data-perf="low"] .aff-card,
+html.light[data-perf="low"] .grid-card,
+html.light[data-perf="low"] .fame-card,
+html.light[data-perf="low"] .carousel-card{
+  background:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 18px 40px -28px rgba(0,0,0,.2);
+}
+html[data-perf="low"] .view-toggle{background:var(--card-bg-soft)}
+html[data-perf="low"] .aff-card::before,
+html[data-perf="low"] .grid-card::before,
+html[data-perf="low"] .fame-card::before{display:none!important}
 
-.wmark-modal{
-  position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:20px;
-  background:rgba(0,0,0,.55);backdrop-filter:blur(6px);animation:fadeInWm .25s ease both;
+/* members page: static ambient instead of three huge blurred, animated blobs */
+html[data-perf="low"] .gm{background:radial-gradient(ellipse at 18% 0%,var(--c2),var(--c1) 58%)}
+html[data-perf="low"] .gm-bg{display:none}
+html[data-perf="low"] .gm-stage{perspective:none;transform-style:flat}
+html[data-perf="low"] .gm-ring{transform-style:flat}
+html[data-perf="low"] .gm-card{
+  filter:none!important;will-change:auto;
+  transform:translate3d(0,calc(var(--d,0)*103%),0);
+  transition:transform .45s ease,opacity .35s;
 }
-.wmark-card{
-  width:min(30rem,100%);padding:22px 22px 16px;border-radius:22px;
-  background:var(--card-bg);border:1px solid var(--card-border);color:var(--fg);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 30px 80px -30px rgba(0,0,0,.9);
-  font:400 13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  backdrop-filter:blur(18px);animation:wmUp .3s cubic-bezier(.2,.9,.2,1) both;
-}
-.wmark-card h2{margin:0 0 10px;font-size:16px;letter-spacing:.2em;text-transform:uppercase}
-.wmark-card p{margin:0 0 10px;color:var(--muted)}
-.wmark-card b{color:var(--fg)}
-.wmark-legal{font-size:11px;opacity:.75}
-.wmark-close{
-  margin-top:4px;width:100%;padding:10px;border-radius:12px;cursor:pointer;
-  border:1px solid var(--card-border);background:var(--card-bg-soft);color:var(--fg);
-  font:700 11px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;
-}
-@keyframes fadeInWm{from{opacity:0}to{opacity:1}}
-@keyframes wmUp{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
-html.light .wmark{color:#000}
-@media (prefers-reduced-motion:reduce){.wmark-card,.wmark-modal{animation:none}}
+html[data-perf="low"] .gm.modal .gm-main{filter:none!important;opacity:.35;transition:opacity .2s}
+html[data-perf="low"] .gm.modal .gm-stage{display:none}
+html[data-perf="low"] .gm-scrim{background:rgba(5,5,7,.62)}
+html[data-perf="low"] .gm-island{box-shadow:0 18px 50px -12px rgba(0,0,0,.8);transition:none!important}
+
+/* hall of fame: no 3D tilt, conic rings, ken-burns or full-screen filters */
+html[data-perf="low"] .fame-grid .fame-card{transform:none}
+html[data-perf="low"] .fame-grid .fame-card:hover{transform:none;border-color:var(--card-border)}
+html[data-perf="low"] .fame-card:hover .fame-card-bg,
+html[data-perf="low"] .fame-card:hover .fame-card-avatar-wrap{transform:none;filter:none}
+html[data-perf="low"] .fame-card .hof-foil,
+html[data-perf="low"] .fame-card .hof-ring,
+html[data-perf="low"] .fame-card .hof-open-hint,
+html[data-perf="low"] .hof-glare,
+html[data-perf="low"] .hof-banner::before{display:none!important}
+html[data-perf="low"] .hof-bannerimg{animation:none!important;transform:none!important;will-change:auto}
+html[data-perf="low"] .hof-wrap{filter:none!important;transform:none!important}
+html[data-perf="low"] .hof-body>*{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}
+
+/* decorative loops off */
+html[data-perf="low"] #musicBtn[aria-pressed="true"] svg,
+html[data-perf="low"] .eq i,
+html[data-perf="low"] .wordmark,
+html[data-perf="low"] .hall-title,
+html[data-perf="low"] .hof-name,
+html[data-perf="low"] .hof-av,
+html[data-perf="low"] .hof-tag i,
+html[data-perf="low"] .hof-dot,
+html[data-perf="low"] .fame-card-dot,
+html[data-perf="low"] .intro-skip-hint,
+html[data-perf="low"] .intro-corner,
+html[data-perf="low"] .intro-vignette{animation:none!important}
+html[data-perf="low"] .wordmark,
+html[data-perf="low"] .hall-title,
+html[data-perf="low"] .hof-name{background-size:100% 100%}
+html[data-perf="low"] .bgban{display:none!important}
+
+/* intro: skip the expensive turbulence/glow; light-mode invert stays static */
+html[data-perf="low"] .lb-brushed{display:none}
+html[data-perf="low"] #lbLogo,
+html[data-perf="low"] #lbLogo .lb-stroke{filter:none!important}
+html[data-perf="low"] .lb-glint{mix-blend-mode:normal!important}
+html[data-perf="low"] .intro-overlay canvas{will-change:auto}
+/* light mode uses a full-screen invert; keep it, but make the layer static */
+html.light[data-perf="low"] .intro-overlay.is-leaving #asciiCanvas,
+html.light[data-perf="low"] .intro-overlay.is-bg #asciiCanvas{opacity:0!important}
+
+/* route / reveal transitions without blur */
+html[data-perf="low"] body.site-reveal main,
+html[data-perf="low"] body.site-reveal .nav-inner,
+html[data-perf="low"] .mobile-menu.open{animation:none!important}
+html[data-perf="low"] .view.in .fx{animation:fxUpLite .28s ease both;animation-delay:0ms!important}
+html[data-perf="low"] .view.out .fx{animation:fxDnLite .2s ease both;animation-delay:0ms!important}
+@keyframes fxUpLite{from{opacity:0;transform:translateY(8px)}}
+@keyframes fxDnLite{to{opacity:0;transform:translateY(-6px)}}

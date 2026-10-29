@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LOGO } from './logoPaths.js';
-import { reducedMotion } from './util.js';
+import { isLowPower, reducedMotion } from './util.js';
 
 const T = { start: 0.45, draw: 1.5, spread: 1.1, hold: 0.5, glint: 0.25 };
 const RAMP = ' .,:;-=+*#%@', NK = RAMP.length;
@@ -18,6 +18,7 @@ export default function Intro({ phase, route, onEnter }) {
 
   /* logo outline -> fill -> glint */
   useEffect(() => {
+    const low = isLowPower();
     const timers = [];
     const after = (s, fn) => timers.push(setTimeout(fn, s * 1000));
     const items = paths.current.filter(Boolean)
@@ -26,7 +27,7 @@ export default function Intro({ phase, route, onEnter }) {
     let sweeping = false;
 
     const sweep = () => {
-      if (sweeping || !glintRef.current) return;
+      if (low || sweeping || !glintRef.current) return;
       sweeping = true;
       const t0 = performance.now(), dur = 1500, from = -400, to = 1900;
       (function f(t) {
@@ -57,27 +58,41 @@ export default function Intro({ phase, route, onEnter }) {
     after(fillAt + T.glint, sweep);
     after(fillAt + 0.2, () => setReady(true));
     if (reducedMotion()) finish(false);
+    else if (low) finish(true);
 
-    const iv = setInterval(() => {                       // re-glint now and then while Home is the background
+    const iv = low ? 0 : setInterval(() => {              // re-glint now and then while Home is the background
       if (document.hidden || live.current.phase !== 'bg' || live.current.route !== '/') return;
       sweep();
     }, 9000);
-    return () => { timers.forEach(clearTimeout); clearInterval(iv); };
+    return () => { timers.forEach(clearTimeout); if (iv) clearInterval(iv); };
   }, []);
 
   useEffect(() => { if (phase === 'leaving' && api.current.sweep) api.current.sweep(); }, [phase]);
 
   /* ASCII smoke */
   useEffect(() => {
-    const cv = cvRef.current, ctx = cv.getContext('2d'), svgEl = svgRef.current;
-    let CELL = 11, cols = 0, rows = 0, W = 0, H = 0, dpr = 1, kArr = null, last = 0, raf = 0;
+    const cv = cvRef.current;
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    if (!ctx) return;
+    const svgEl = svgRef.current;
+    const low = isLowPower();
+    let CELL = 12, cols = 0, rows = 0, W = 0, H = 0, dpr = 1, kArr = null, last = 0, raf = 0, resizeT = 0;
     let mx = -1, my = -1, tx = 0, ty = 0, px = 0, py = 0, depth = 0.75;
     const reduce = reducedMotion();
     const styles = Array.from({ length: NK }, (_, q) => `rgba(255,255,255,${(0.06 + 0.2 * (q / NK)).toFixed(3)})`);
 
     const fit = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = innerWidth; H = innerHeight; CELL = W < 700 ? 13 : 11;
+      W = window.innerWidth; H = window.innerHeight;
+      // Keep the number of animated cells (and backing pixels) roughly constant
+      // instead of growing with the screen. This is what keeps 4K / low-end GPUs
+      // from trying to paint tens of thousands of glyphs every frame.
+      const targetCells = low ? 3500 : 10000;
+      const baseCell = W < 700 ? 14 : 12;
+      CELL = Math.max(baseCell, Math.ceil(Math.sqrt((W * H) / targetCells)));
+      const maxPx = low ? 1.1e6 : 2.4e6;
+      dpr = Math.min(window.devicePixelRatio || 1, low ? 1 : 1.35, Math.sqrt(maxPx / Math.max(1, W * H)));
+      dpr = Math.max(0.5, dpr);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       cols = Math.ceil(W / CELL); rows = Math.ceil(H / CELL);
@@ -92,18 +107,22 @@ export default function Intro({ phase, route, onEnter }) {
         u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
       return hash(xi, yi) * (1 - u) * (1 - v) + hash(xi + 1, yi) * u * (1 - v) + hash(xi, yi + 1) * (1 - u) * v + hash(xi + 1, yi + 1) * u * v;
     };
-    const fbm = (x, y) => vnoise(x, y) * 0.55 + vnoise(x * 2.1, y * 2.1) * 0.3 + vnoise(x * 4.3, y * 4.3) * 0.15;
+    const fbm = low
+      ? (x, y) => vnoise(x, y) * 0.65 + vnoise(x * 2.3, y * 2.3) * 0.35
+      : (x, y) => vnoise(x, y) * 0.55 + vnoise(x * 2.1, y * 2.1) * 0.3 + vnoise(x * 4.3, y * 4.3) * 0.15;
 
     const frame = (t) => {
+      if (document.hidden) { raf = 0; return; }
       raf = requestAnimationFrame(frame);
-      if (document.hidden) return;
-      const gap = live.current.phase === 'bg' ? 46 : 40;
+      const gap = low ? (live.current.phase === 'bg' ? 120 : 80) : (live.current.phase === 'bg' ? 55 : 40);
       if (t - last < gap) return;
       last = t;
-      const s = reduce ? 0 : t * 0.00006, cx = W / 2, cy = H / 2;
+      const s = reduce ? 0 : t * (low ? 0.00004 : 0.00006), cx = W / 2, cy = H / 2;
       depth += ((live.current.route === '/' ? 0.75 : 0.35) - depth) * 0.06;  // Home keeps the centre clear for the tag
-      px += (tx - px) * 0.08; py += (ty - py) * 0.08;
-      svgEl.style.translate = (px * 16).toFixed(2) + 'px ' + (py * 10).toFixed(2) + 'px';
+      if (!low && svgEl) {
+        px += (tx - px) * 0.08; py += (ty - py) * 0.08;
+        svgEl.style.translate = (px * 16).toFixed(2) + 'px ' + (py * 10).toFixed(2) + 'px';
+      }
 
       let i, j, idx = 0;
       for (j = 0; j < rows; j++) {
@@ -115,7 +134,10 @@ export default function Intro({ phase, route, onEnter }) {
           const dx = (i * CELL - cx) / W, dy = (j * CELL - cy) / H;
           const vign = Math.min(1, Math.sqrt(dx * dx * 1.6 + dy * dy * 2.4) * 1.5);
           v *= 1 - depth + depth * vign;
-          if (mx >= 0) { const d = Math.hypot(i * CELL - mx, j * CELL - my); v += Math.max(0, 1 - d / 150) * 0.45; }
+          if (!low && mx >= 0) {
+            const ddx = i * CELL - mx, ddy = j * CELL - my, d2 = ddx * ddx + ddy * ddy;
+            if (d2 < 22500) v += (1 - Math.sqrt(d2) / 150) * 0.45;
+          }
           const k = (v * NK) | 0; kArr[idx] = k >= NK ? NK - 1 : k;
         }
       }
@@ -127,18 +149,31 @@ export default function Intro({ phase, route, onEnter }) {
       if (reduce) { cancelAnimationFrame(raf); raf = 0; }
     };
 
-    const onResize = () => { fit(); if (!raf) raf = requestAnimationFrame(frame); };
-    const onMove = (e) => { mx = e.clientX; my = e.clientY; tx = e.clientX / innerWidth - 0.5; ty = e.clientY / innerHeight - 0.5; };
+    const onResize = () => {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(() => { fit(); if (!raf) raf = requestAnimationFrame(frame); }, low ? 250 : 150);
+    };
+    const onMove = (e) => {
+      if (low) return;
+      mx = e.clientX; my = e.clientY;
+      tx = e.clientX / window.innerWidth - 0.5; ty = e.clientY / window.innerHeight - 0.5;
+    };
     const onLeave = () => { mx = my = -1; tx = ty = 0; };
+    const onVis = () => {
+      if (document.hidden) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!raf) { last = 0; raf = requestAnimationFrame(frame); }
+    };
     addEventListener('resize', onResize);
     addEventListener('pointermove', onMove, { passive: true });
     document.documentElement.addEventListener('mouseleave', onLeave);
+    document.addEventListener('visibilitychange', onVis);
     fit(); raf = requestAnimationFrame(frame);
     return () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(raf); clearTimeout(resizeT);
       removeEventListener('resize', onResize);
       removeEventListener('pointermove', onMove);
       document.documentElement.removeEventListener('mouseleave', onLeave);
+      document.removeEventListener('visibilitychange', onVis);
     };
   }, []);
 
@@ -177,8 +212,8 @@ export default function Intro({ phase, route, onEnter }) {
           </defs>
           <g id="lbMetal" clipPath="url(#lbShape)">
             <rect x="150" y="215" width="1395" height="500" fill="url(#lbSteel)" />
-            <rect x="150" y="215" width="1395" height="500" fill="#fff" filter="url(#lbBrushed)" opacity=".28" />
-            <rect ref={glintRef} x="-400" y="150" width="240" height="640" fill="url(#lbGlintG)" transform="skewX(-18)" style={{ mixBlendMode: 'overlay' }} />
+            <rect className="lb-brushed" x="150" y="215" width="1395" height="500" fill="#fff" filter="url(#lbBrushed)" opacity=".28" />
+            <rect className="lb-glint" ref={glintRef} x="-400" y="150" width="240" height="640" fill="url(#lbGlintG)" transform="skewX(-18)" style={{ mixBlendMode: 'overlay' }} />
           </g>
           <g id="lbStrokes">
             {LOGO.map((d, i) => <path key={i} ref={(el) => { paths.current[i] = el; }} d={d} className="lb-stroke" />)}

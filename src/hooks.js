@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isLowPower } from './util.js';
 
 const parse = () => {
   const h = location.hash.replace(/^#/, '') || '/';
@@ -62,19 +63,25 @@ export function useMusic() {
 /* cursor glow on cards */
 export function useCardGlow() {
   useEffect(() => {
-    const f = (e) => {
+    if (isLowPower() || matchMedia('(hover:none)').matches) return;
+    let raf = 0, ev = null;
+    const apply = () => {
+      raf = 0;
+      const e = ev; if (!e) return;
       const t = e.target.closest && e.target.closest('.aff-card,.grid-card,.fame-card'); if (!t) return;
       const r = t.getBoundingClientRect();
       t.style.setProperty('--mx', e.clientX - r.left + 'px'); t.style.setProperty('--my', e.clientY - r.top + 'px');
     };
+    const f = (e) => { ev = e; if (!raf) raf = requestAnimationFrame(apply); };
     document.addEventListener('pointermove', f, { passive: true });
-    return () => document.removeEventListener('pointermove', f);
+    return () => { document.removeEventListener('pointermove', f); cancelAnimationFrame(raf); };
   }, []);
 }
 
 /* hovering a banner turns it into the page background; leaving fades back to the ASCII */
 export function useBannerBackground() {
   useEffect(() => {
+    if (isLowPower() || matchMedia('(hover:none)').matches) return;
     const L = [document.createElement('div'), document.createElement('div')], root = document.documentElement;
     let k = 0, cur = null;
     L.forEach((d) => { d.className = 'bgban'; d.setAttribute('aria-hidden', 'true'); document.body.appendChild(d); });

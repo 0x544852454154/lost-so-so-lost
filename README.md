@@ -30,11 +30,9 @@ Everything here is © lostboys, all rights reserved — see `LICENSE`.
 - stamps every chunk with an ownership fingerprint (`window.__LB_*__`,
   `window.__LB_OWNER__`, `data-lb` on `<html>`)
 
-Runtime side (`src/guard.js`, `src/Watermark.jsx`):
+Runtime side (`src/guard.js`):
 
-- visible `© lostboys · do not copy` credit bottom-right (always on the page),
-  plus a `?` button with a clear “no copying, with or without credit” notice
-- console ownership notice, re-printed when DevTools is opened
+- console ownership notice
 - `data-lb-copy="<host>"` on `<html>` when served from a domain not in
   `OWNER_HOSTS` (add your real domain there)
 
@@ -47,7 +45,16 @@ to prove no selector was lost in the rename.
 **Honest limit:** HTML/CSS/JS served to a browser can always be viewed. This
 makes copying slow, obvious and legally traceable — it does not make it
 impossible. For real deterrence keep assets (fonts, logo SVG, song) on your own
-origin with hotlink protection, and keep the visible credit on.
+origin with hotlink protection.
+
+## Performance
+
+`index.html` marks touch, low-memory, save-data and reduced-motion devices with
+`data-perf="low"` before first paint. That mode keeps the layout and content but
+drops the expensive parts: the ASCII canvas renders fewer cells at a lower frame
+rate, heavy `backdrop-filter`/`filter` effects are removed, and decorative loops
+(tilt, sheen, conic rings, drifting blobs) stop. The full effect is unchanged on
+capable desktops. Append `?perf=low` to any URL to preview that mode on a desktop.
 
 ## Deploy
 

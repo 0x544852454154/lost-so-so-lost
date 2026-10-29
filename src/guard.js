@@ -17,18 +17,6 @@ export function installGuard() {
     console.log(SIGN, STYLE, SOFT);
   } catch {}
 
-  /* repeat the notice when DevTools is opened after load */
-  let opened = false;
-  setInterval(() => {
-    const t0 = performance.now();
-    // eslint-disable-next-line no-debugger
-    debugger;
-    if (!opened && performance.now() - t0 > 120) {
-      opened = true;
-      try { console.log(SIGN, STYLE, SOFT); } catch {}
-    }
-  }, 3000);
-
   /* host check: flag builds served from a domain that isn't ours */
   try {
     const host = location.hostname.toLowerCase();

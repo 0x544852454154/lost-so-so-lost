@@ -1,6 +1,40 @@
 export const pad = (n) => (n < 10 ? '0' + n : String(n));
 export const DEFAULT_AVATAR = 'https://cdn.discordapp.com/embed/avatars/0.png';
-export const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let rmQuery;
+export const reducedMotion = () => {
+  if (typeof window === 'undefined') return false;
+  if (!rmQuery) rmQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  return rmQuery.matches;
+};
+
+/* Touch / low-memory / reduced-motion devices get the calm version of the site:
+   fewer canvas cells, lower frame rate and no expensive blur/filter effects.
+   index.html sets data-perf before first paint so CSS can opt in immediately. */
+let lowPower;
+export function isLowPower() {
+  if (lowPower !== undefined) return lowPower;
+  try {
+    if (typeof document !== 'undefined') {
+      const attr = document.documentElement.getAttribute('data-perf');
+      if (attr) return (lowPower = attr === 'low');
+    }
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return (lowPower = false);
+    const m = window.matchMedia ? window.matchMedia.bind(window) : null;
+    const n = navigator;
+    lowPower = !!(
+      reducedMotion() ||
+      (m && m('(pointer: coarse)').matches) ||
+      (n.connection && n.connection.saveData) ||
+      (typeof n.deviceMemory === 'number' && n.deviceMemory <= 4) ||
+      (typeof n.hardwareConcurrency === 'number' && n.hardwareConcurrency <= 4)
+    );
+    if (lowPower && typeof document !== 'undefined') document.documentElement.setAttribute('data-perf', 'low');
+  } catch {
+    lowPower = false;
+  }
+  return lowPower;
+}
+export const calmMotion = () => reducedMotion() || isLowPower();
 
 export function displayName(member, data) {
   const u = data && data.discord_user;
@@ -68,7 +102,7 @@ export function handleFromUrl(u) {
 /* text that decodes out of ASCII noise */
 export function scramble(el, text, dur) {
   const tok = (el.__scr = (el.__scr || 0) + 1);
-  if (reducedMotion() || !text) { el.textContent = text; return; }
+  if (calmMotion() || !text) { el.textContent = text; return; }
   const set = '.:-=+*#%@01/\\', t0 = performance.now();
   (function f(t) {
     if (el.__scr !== tok) return;

@@ -37,7 +37,6 @@ const KEEP = new Set([
   'ghost', 'primary', 'side', 'r', 'l', 'xr', 'dup', 'sq', 'live', 'is-active',
   'is-bg', 'is-leaving', 'is-on', 'hof-src', 'hof-lock', 'site-reveal', 'has-ambient',
   'banner-bg', 'intro-active',
-  'wmark', 'wmark-tag', 'wmark-info', 'wmark-modal', 'wmark-card', 'wmark-legal', 'wmark-close',
   'intro-overlay', 'lb-ready', 'lb-filled', 'lb-stroke', 'intro-content', 'intro-scrim',
   'intro-skip-hint', 'cur',
   'introOverlay', 'lbSmoke', 'lbLogo', 'asciiCanvas', 'lbMetal', 'lbStrokes', 'lbBrushed',

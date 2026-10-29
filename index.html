@@ -22,6 +22,14 @@
     var t = localStorage.getItem('theme') || 'dark', r = document.documentElement;
     r.classList.toggle('light', t === 'light'); r.classList.toggle('dark', t !== 'light');
     r.style.colorScheme = t === 'light' ? 'light' : 'dark';
+    var n = navigator, m = window.matchMedia;
+    var low = (m && m('(prefers-reduced-motion: reduce)').matches) ||
+      (m && m('(pointer: coarse)').matches) ||
+      (n.connection && n.connection.saveData) ||
+      (typeof n.deviceMemory === 'number' && n.deviceMemory <= 4) ||
+      (typeof n.hardwareConcurrency === 'number' && n.hardwareConcurrency <= 4) ||
+      /[?&]perf=low(?:&|$)/.test(String(location.search || ''));
+    if (low) r.setAttribute('data-perf', 'low');
   } catch (e) {}
 })();
 </script>

@@ -18,11 +18,15 @@ export default function Nav({ route, theme, onTheme, music, navRef }) {
   };
   useLayoutEffect(place, [route]);
   useEffect(() => {
-    const onResize = () => { place(); if (innerWidth >= 768) setMenu(false); };
+    let raf = 0;
+    const onResize = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; place(); if (innerWidth >= 768) setMenu(false); });
+    };
     const onKey = (e) => { if (e.key === 'Escape') setMenu(false); };
     addEventListener('resize', onResize); document.addEventListener('keydown', onKey);
     if (document.fonts) document.fonts.ready.then(place);
-    return () => { removeEventListener('resize', onResize); document.removeEventListener('keydown', onKey); };
+    return () => { cancelAnimationFrame(raf); removeEventListener('resize', onResize); document.removeEventListener('keydown', onKey); };
   }, []);
 
   const link = (r, label, i, nav = true) => (
