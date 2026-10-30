@@ -3,7 +3,7 @@ export const SONG_TITLE = 'lostboys';
 
 // Optional per-member fields: spotify, instagram, tiktok, role, bio, name, handle
 export const MEMBERS = [
-  { discordId: '1521890728094208122', banner: 'https://file.garden/am9m147l3hw3nqT1/baby.gif', instagram: 'https://www.instagram.com/eunsoulja/', spotify: 'https://open.spotify.com/user/31ausbm57s35gosdm5lqi6sapfv4?si=6184b5ccbd604718' },
+  { discordId: '1521890728094208122', banner: 'https://file.garden/am9m147l3hw3nqT1/ascii-art%20(6).gif', instagram: 'https://www.instagram.com/eunsoulja/', spotify: 'https://open.spotify.com/user/31ausbm57s35gosdm5lqi6sapfv4?si=6184b5ccbd604718' },
   { discordId: '1551211002920439908', banner: 'https://file.garden/am9m147l3hw3nqT1/6F03E2A8-6E07-4084-B201-131E01DC7E2F.gif' },
   { discordId: '1441623190412726355', banner: 'https://file.garden/am9m147l3hw3nqT1/Mish%20Way%20__%20White%20Lung.gif' },
   { discordId: '1512675755459612835', banner: 'https://file.garden/ape4wXkcZmuN3zhu/C2EAGjoH.gif' },
