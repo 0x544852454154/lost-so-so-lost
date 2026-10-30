@@ -22,6 +22,9 @@ export const MEMBERS = [
   { discordId: '909977852378763264', banner: 'https://file.garden/am9m147l3hw3nqT1/Tupac%20Shakur.gif' },
   { discordId: '1436325518730461205', banner: 'https://file.garden/am9m147l3hw3nqT1/0db46eada63938b3df6b713cb726d3f3.gif' },
   { discordId: '1487538270622716005', banner: 'https://file.garden/am9m147l3hw3nqT1/quality_restoration_20261020135518966.jpg' },
+  { discordId: '747746641590616064', banner: 'https://file.garden/am9m147l3hw3nqT1/IMG_8771.gif' },
+  { discordId: '1317016754538549370', banner: 'https://file.garden/am9m147l3hw3nqT1/file_00000000cfa88207866cceb437da4a28_1.png' },
+  { discordId: '1532708664488497374', banner: 'https://file.garden/am9m147l3hw3nqT1/1bcc0086f7060c2e9b14eeca0a6fbd85.jpg' },
 ];
 
 export const HALL_OF_FAME = [
