@@ -25,6 +25,7 @@ export const MEMBERS = [
   { discordId: '747746641590616064', banner: 'https://file.garden/am9m147l3hw3nqT1/IMG_8771.gif' },
   { discordId: '1317016754538549370', banner: 'https://file.garden/am9m147l3hw3nqT1/file_00000000cfa88207866cceb437da4a28_1.png' },
   { discordId: '1532708664488497374', banner: 'https://file.garden/am9m147l3hw3nqT1/1bcc0086f7060c2e9b14eeca0a6fbd85.jpg' },
+  { discordId: '1435619294229561434', banner: 'https://file.garden/am9m147l3hw3nqT1/rn_image_picker_lib_temp_bb6c7a9f-450b-4bcb-948e-6a97c8b7d3b3.gif' },
 ];
 
 export const HALL_OF_FAME = [
